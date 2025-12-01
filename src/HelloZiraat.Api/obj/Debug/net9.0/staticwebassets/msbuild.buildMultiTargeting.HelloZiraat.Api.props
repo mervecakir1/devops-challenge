@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\HelloZiraat.Api.props" />
+</Project>

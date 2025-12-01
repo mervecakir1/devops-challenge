@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "yOkRwg0kzO6zk2mUOHW/FhgBdaZ3Jr0/87NTjrHI/hg=",
+  "Source": "HelloZiraat.Api",
+  "BasePath": "_content/HelloZiraat.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
