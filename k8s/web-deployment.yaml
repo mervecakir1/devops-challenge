@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-ziraat-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-ziraat-web
+  template:
+    metadata:
+      labels:
+        app: hello-ziraat-web
+    spec:
+      containers:
+        - name: hello-ziraat-web
+          image: mervecakir/hello-ziraat-web:latest
+          ports:
+            - containerPort: 52369

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-ziraat-web-service
+spec:
+  type: NodePort
+  selector:
+    app: hello-ziraat-web
+  ports:
+    - port: 52369
+      targetPort: 52369
+      nodePort: 30081
