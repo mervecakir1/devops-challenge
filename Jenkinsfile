@@ -69,11 +69,24 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh '''
+                set -e
+                echo "Workspace:"
+                pwd
+                echo "Repo files:"
+                ls -la
+
+                echo "k8s folder:"
+                ls -la k8s
+
+                echo "Applying Kubernetes manifests..."
+                kubectl apply -f k8s/
+                '''
+                sh '''
                 pwd
                 ls -la
                 ls -la k8s
                 '''
-                
+
                 sh """
                   echo "Applying Kubernetes manifests..."
 
