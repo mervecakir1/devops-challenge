@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKERHUB_CREDENTIALS = 'dockerhub-creds'
-        DOCKERHUB_USER        = 'mervecakir1'
+        DOCKERHUB_USER        = 'mervecakir'
     }
 
     stages {
