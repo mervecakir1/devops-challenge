@@ -68,6 +68,12 @@ pipeline {
         ======================= */
         stage('Deploy to Kubernetes') {
             steps {
+                sh '''
+                pwd
+                ls -la
+                ls -la k8s
+                '''
+                
                 sh """
                   echo "Applying Kubernetes manifests..."
 
