@@ -95,3 +95,4 @@ C:\Users\Lenovo\OneDrive\Masaüstü\devops-challenge\src\HelloZiraat.Web\obj\Deb
 C:\Users\Lenovo\OneDrive\Masaüstü\devops-challenge\src\HelloZiraat.Web\obj\Debug\net9.0\HelloZiraat.Web.pdb
 C:\Users\Lenovo\OneDrive\Masaüstü\devops-challenge\src\HelloZiraat.Web\obj\Debug\net9.0\HelloZiraat.Web.genruntimeconfig.cache
 C:\Users\Lenovo\OneDrive\Masaüstü\devops-challenge\src\HelloZiraat.Web\obj\Debug\net9.0\ref\HelloZiraat.Web.dll
+C:\Users\Lenovo\OneDrive\Masaüstü\devops-challenge\src\HelloZiraat.Web\obj\Debug\net9.0\HelloZiraat.Web.sourcelink.json

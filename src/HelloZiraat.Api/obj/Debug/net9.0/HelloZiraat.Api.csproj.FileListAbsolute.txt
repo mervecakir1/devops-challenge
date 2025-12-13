@@ -31,3 +31,4 @@ C:\Users\Lenovo\OneDrive\Masaüstü\devops-challenge\src\HelloZiraat.Api\obj\Deb
 C:\Users\Lenovo\OneDrive\Masaüstü\devops-challenge\src\HelloZiraat.Api\obj\Debug\net9.0\HelloZiraat.Api.pdb
 C:\Users\Lenovo\OneDrive\Masaüstü\devops-challenge\src\HelloZiraat.Api\obj\Debug\net9.0\HelloZiraat.Api.genruntimeconfig.cache
 C:\Users\Lenovo\OneDrive\Masaüstü\devops-challenge\src\HelloZiraat.Api\obj\Debug\net9.0\ref\HelloZiraat.Api.dll
+C:\Users\Lenovo\OneDrive\Masaüstü\devops-challenge\src\HelloZiraat.Api\obj\Debug\net9.0\HelloZiraat.Api.sourcelink.json
