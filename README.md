@@ -7,7 +7,7 @@ This repository contains my solution for the **Ziraat DevOps Challenge**.
 The goal of the challenge is to demonstrate that I can:
 
 - Containerize applications using **Docker**
-- Automate image builds and pushes using **CI/CD (GitHub Actions)**
+- Automate image builds and pushes using **CI/CD (Jenkins Pipeline)**
 - Deploy microservices into a **Kubernetes** cluster
 - Expose them to the outside world using **NodePort** services
 - Enable **Horizontal Pod Autoscaling (HPA)** based on CPU usage
@@ -18,10 +18,10 @@ The application consists of two components:
 - **HelloZiraat API**
   - Simple ASP.NET Web API
   - Returns: `Hello Ziraat Team from Merve`
-  - Listens on **port 11130** (as required by the challenge)
+  - Listens on **port 11130** 
 - **HelloZiraat Web**
   - Simple ASP.NET Web application
-  - Frontend that communicates with the API
+  - Communicates with the API
   - Listens on **port 52369**
 
 Both components are containerized and deployed as independent services to Kubernetes, following a **microservice-style** architecture.
@@ -29,7 +29,9 @@ Both components are containerized and deployed as independent services to Kubern
 ---
 ## 2. Architecture
 
-This project follows a simple microservice-style architecture consisting of two independent components running inside a Kubernetes cluster. Each component is packaged as a Docker image and deployed using Kubernetes Deployments, while external access is provided via NodePort Services.
+This project follows a simple microservice-style architecture consisting of two independent components running inside a Kubernetes cluster. 
+
+Each component is packaged as a Docker image and deployed using Kubernetes Deployments, while external access is provided via NodePort Services.
 
 ### How the system works
 
@@ -74,8 +76,8 @@ Key autoscaling details:
 - **Target Deployment:** hello-ziraat-api
 - **Metric Type:** CPU (Resource/Utilization)
 - **Scaling Behavior:** 
-  - If average CPU > 50% → more API pods are created (scale out)
-  - If average CPU < 50% → pods are removed gradually (scale in)
+  - If average CPU > 20% → more API pods are created (scale out)
+  - If average CPU < 20% → pods are removed gradually (scale in)
 - **Minimum Replicas:** 1  
 - **Maximum Replicas:** 5  
 
@@ -97,11 +99,22 @@ Key autoscaling details:
 - metrics-server (for CPU metrics)
 
 **CI/CD**
-- GitHub Actions (automated Docker builds & pushes)
+- Checkout source code
+- Build & Push API image → Docker Hub
+- Build & Push Web image → Docker Hub
+- Deploy Kubernetes manifests `(kubectl apply -f k8s/)`
+- Rollout status checks
+- Failure handling with rollback
+
 
 **Infrastructure as Code**
-- Kubernetes manifests (YAML)
-- PowerShell scripts (deploy/delete/load testing)
+- Kubernetes manifests (YAML) under `k8s/`
+  `api-deployment.yaml`
+  `api-service.yaml`
+  `api-hpa.yaml`
+  `web-deployment.yaml`
+  `web-service.yaml`
+- Bonus operational script: `scripts/cluster-status.sh`
 
 ## 5. How to Run (Kubernetes Deployment)
 
@@ -113,8 +126,8 @@ Before running the project, make sure you have:
 
 - **Docker Desktop** installed and **Kubernetes enabled**
 - **kubectl** installed and configured (Docker Desktop sets this automatically)
-- **Docker Hub account** (required for pulling images)
-- A clone of this repository
+- Jenkins running
+- Docker Hub credentials configured in Jenkins
 
 Verify your Kubernetes cluster:
 
@@ -127,38 +140,23 @@ You should see output similar to:
 NAME             STATUS   ROLES           AGE   VERSION
 docker-desktop   Ready    control-plane   ...
 ```
-### 5.2 Deploy the Entire Application
+### 5.2 Run Deployment via Jenkins
+The deployment is performed by Jenkins using the **Jenkinsfile**.
+
+**What Jenkins does automatically:**
+
+- Clones repository
+- Builds Docker images for API & Web
+- Pushes images to Docker Hub
+- Applies Kubernetes manifests in k8s/
+- Waits for rollout completion
+- Rolls back on failure
 
 All Kubernetes resources (API, Web, HPA) can be deployed using a single PowerShell script.
 
-Navigate to the scripts directory:
-
-```
-cd scripts
-.\deploy.ps1
-```
-This script performs the following:
-
-- Deploys the **HelloZiraat API** (Deployment + NodePort Service)
-- Deploys the **HelloZiraat Web** (Deployment + NodePort Service)
-- Applies the **Horizontal Pod Autoscaler** (HPA) for the API
-- Ensures everything starts in the correct order
-
-Verify the deployment:
-```
-kubectl get pods
-kubectl get services
-kubectl get hpa
-```
-Expected results:
-
-- API and Web pods in **Running** state
-- Services exposed on NodePort
-- HPA resource created and monitoring CPU usage
-
 ### 5.3 Access the Application
 
-List exposed services:
+List services:
 ```
 kubectl get services
 ```
@@ -178,181 +176,60 @@ http://localhost:30080
 
 ### 5.4 Load Testing (Trigger Autoscaling)
 
-To generate CPU load that triggers autoscaling:
+To trigger HPA quickly, send continuous requests to the API NodePort.
 
 
 ```
-.\start-load-test.ps1
+1..20 | ForEach-Object { Start-Job { while ($true) { try { iwr http://localhost:30080 -UseBasicParsing | Out-Null } catch {} } } }
 
 ```
-This script:
-
-- Creates a load-generator pod
-- Continuously sends requests to the API
-- Increases CPU usage, causing the HPA to scale up pods
-
-Monitor behavior:
+Monitor scaling:
 ```
 kubectl get hpa -w
 kubectl get pods
 kubectl top pods
+
 ```
-When CPU usage exceeds 50%, HPA increases the number of API pods automatically.
+Expected behavior:
 
-### 5.5 Stop Load Testing
+- CPU increases
+- HPA increases API replicas from 1 → up to 5
+- New API pods appear and become Running
 
-To stop generating load:
+To stop the test, remove jobs:
 ```
-.\stop-load-test.ps1
-```
-
-This deletes the load-generator pod.
-
-### 5.6 Tear Down (Remove All Resources)
-
-To delete all Kubernetes resources created by this project:
-```
-.\delete.ps1
+Get-Job | Stop-Job
+Get-Job | Remove-Job
 ```
 
-This removes:
-- API Deployment + Service
-- Web Deployment + Service
+### 5.5 Cluster Status
+This project includes a bonus script to list cluster resources.
+It prints:
+
+- Pods
+- Services
 - HPA
-- load-generator pod (if running)
 
-Verify cleanup:
-```
-kubectl get pods
-kubectl get services
-kubectl get hpa
-```
-## 5. CI/CD Pipeline (GitHub Actions)
-
-This project uses **GitHub Actions** to automatically build and publish Docker images for both microservices:  
-- **HelloZiraat API**  
-- **HelloZiraat Web**
-
-The CI/CD pipeline is triggered whenever a new commit is pushed to the **main** branch.
-
-### 5.1 What the Pipeline Does
-
-The workflow performs the following tasks automatically:
-
-1. **Checks out the repository source code**  
-2. **Builds Docker images** for both the API and Web applications  
-3. **Logs in to Docker Hub** using repository secrets  
-4. **Pushes the images** with the `latest` tag  
-5. Makes the images **available for Kubernetes** to pull during deployment  
-
-This fully eliminates the need for manual Docker builds.
-
----
-
-### 5.2 Required Secrets
-
-The workflow uses two GitHub Actions secrets to authenticate with Docker Hub:
-
-- **DOCKERHUB_USERNAME**  
-- **DOCKERHUB_TOKEN**
-
-These can be set from:
-
-GitHub → Repository → Settings → Secrets and Variables → Actions
-
-
-Your Docker Hub token must have **read/write** permissions.
-
----
-
-### 5.3 Workflow Trigger
-
-The pipeline runs automatically on:
-
-```
-on:
-  push:
-    branches:
-      - "main"
-```
-
-You can also trigger it manually from:
-GitHub → Actions → devops-challenge → Run workflow
-
-### 5.4 Workflow File Location
-
-The full CI/CD configuration is stored under:
-```
-.github/workflows/devops-challenge.yml
-```
-
-Inside this YAML file, both services are built and published through:
-
-- docker/build-push-action@v6
-
-- docker/login-action@v3
-
-- actions/checkout@v4
-
-### 5.5 Why CI/CD Is Important for This Project?
-
-This challenge explicitly requires automated container builds.
-
-Using GitHub Actions:
-- Guarantees clean, reproducible builds
-- Ensures Kubernetes always pulls the latest Docker image
-- Reduces manual effort and human error
-- Demonstrates real-world DevOps practices
 
 ## 6. Conclusion
 
 This project demonstrates the complete DevOps workflow required by the **Ziraat DevOps Challenge**, covering containerization, automation, orchestration, and scalability.
 
-Throughout the implementation, I delivered:
+**Delivered Outcomes**
 
-### ✔ Containerization
-Both the Web and API applications were packaged as lightweight Docker images and published to Docker Hub.
+- Dockerized API & Web applications
+- Jenkins pipeline for automated build, push, and deployment
+- Kubernetes Deployments + NodePort Services
+- HPA-based autoscaling for API
+- Infrastructure fully defined as code (YAML)
+- Bonus script to inspect cluster state
 
-### ✔ CI/CD Automation
-A GitHub Actions pipeline was built to automatically:
-- Build Docker images
-- Push them to Docker Hub
-- Keep deployments consistent and reproducible
-
-### ✔ Kubernetes Deployments
-Each microservice was deployed as an independent Kubernetes Deployment with its own NodePort Service.
-
-### ✔ Horizontal Pod Autoscaling (HPA)
-CPU-based autoscaling dynamically adjusts API replicas between 1 and 5, ensuring the system can handle fluctuating traffic loads.
-
-### ✔ Infrastructure as Code (IaC)
-All Kubernetes configurations and automation scripts were stored in the repository, making the infrastructure fully reproducible.
-
----
-
-### Overall Result
-
-This solution fulfills all of the challenge requirements:
-
-- **Dockerized applications**  
-- **Automated builds and registry uploads**  
-- **Kubernetes-based microservice deployment**  
-- **Externally exposed services**  
-- **Autoscaling with HPA**  
-- **Infrastructure managed as code**  
+**Overall Result**
 
 The final system is:
-- Scalable  
-- Maintainable  
-- Fully automated  
-- Production-realistic  
 
----
-
-If needed, the system can be extended with:
-- Ingress controller  
-- Logging & monitoring stack (ELK, Prometheus, Grafana)  
-- Canary deployments or blue/green strategies  
-- Helm chart packaging  
-
-This challenge was completed using best practices in DevOps, Kubernetes, and CI/CD automation.
+- Scalable
+- Resilient
+- Automated
+- Maintainable
+- Production-realistic
