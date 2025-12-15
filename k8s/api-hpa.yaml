@@ -9,5 +9,5 @@ spec:
     name: hello-ziraat-api
   minReplicas: 1
   maxReplicas: 5
-  targetCPUUtilizationPercentage: 30
+  targetCPUUtilizationPercentage: 20
   
