@@ -55,6 +55,13 @@ pipeline {
                 '''
             }
         }
+        stage('Cluster Status'){
+            steps {
+                sh'''
+                bash scripts/cluster-status.sh
+                '''
+            }
+        }
     }
     post {
         failure {
